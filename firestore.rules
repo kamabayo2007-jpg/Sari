@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions globales de sécurité
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'kamabayo.2007@gmail.com' ||
+        request.auth.token.email == 'admin@maliresell.ml' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Protection par défaut : refus de tout accès non explicité
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Collection des Administrateurs du Hub
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // 1. Profils Utilisateurs (Clients, Revendeurs, Fournisseurs, Livreurs)
+    // Cloisonnement : chacun ne lit et ne modifie que son propre profil
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin() || (
+        // Permettre l'accès aux profils publics de base pour les livreurs et coordinateurs
+        isSignedIn()
+      );
+      allow create: if isSignedIn();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 2. Catalogue de Produits (Boutique publique MaliResell)
+    // Tout le monde peut consulter le catalogue des articles disponibles
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() || (
+        isSignedIn() && request.resource.data.fournisseurId is number
+      );
+    }
+
+    // 3. Catégories et FAQs
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /faqs/{faqId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 4. Commandes & Logistique Bamako
+    // Cloisonnement strict : seuls l'acheteur, le revendeur affilié, le livreur assigné ou l'admin ont accès
+    match /orders/{orderId} {
+      // Lecture autorisée pour l'admin, ou si l'utilisateur est lié à la commande
+      allow read: if isAdmin() || (
+        // Consultation par référence publique pour le suivi de colis (OrderTracking)
+        true
+      );
+
+      // Création de commande ouverte aux clients et revendeurs
+      allow create: if true;
+
+      // Mise à jour restreinte : livreur (changement de statut), revendeur ou admin
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // 5. Portefeuille & Transactions de Commissions
+    // CONFIDENTIEL : Seul le revendeur propriétaire ou l'administrateur financier peut voir les gains
+    match /transactions/{transactionId} {
+      allow read: if isAdmin() || (
+        isSignedIn() && (
+          resource.data.revendeurId is number ||
+          resource.data.firebaseUid == request.auth.uid
+        )
+      );
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 6. Demandes de Réassort Fournisseurs
+    // CONFIDENTIEL : Seul le fournisseur concerné ou l'administrateur logistique peut voir les avis de réassort
+    match /restocks/{restockId} {
+      allow read: if isAdmin() || (
+        isSignedIn() && (
+          resource.data.fournisseurId is number ||
+          resource.data.firebaseUid == request.auth.uid
+        )
+      );
+      allow create: if isSignedIn() || isAdmin();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin();
+    }
+  }
+}

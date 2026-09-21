@@ -1,0 +1,8 @@
+{
+  "name": "Remix MaliResell",
+  "description": "Plateforme e-commerce et réseau de revendeurs pour le marché malien.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

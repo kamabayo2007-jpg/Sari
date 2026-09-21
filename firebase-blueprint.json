@@ -1,0 +1,174 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Profil utilisateur avec rôle, informations de contact et solde portefeuille",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "firebaseUid": { "type": "string" },
+        "nom": { "type": "string", "maxLength": 100 },
+        "prenom": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "format": "email", "maxLength": 120 },
+        "telephone": { "type": "string", "maxLength": 30 },
+        "telephoneSecondaire": { "type": "string", "maxLength": 30 },
+        "role": { "type": "string", "enum": ["ADMIN", "REVENDEUR", "CLIENT", "LIVREUR", "FOURNISSEUR"] },
+        "ville": { "type": "string", "maxLength": 60 },
+        "commune": { "type": "string", "maxLength": 60 },
+        "quartier": { "type": "string", "maxLength": 100 },
+        "actif": { "type": "boolean" },
+        "soldeWallet": { "type": "number" },
+        "nomEntreprise": { "type": "string", "maxLength": 120 },
+        "photoURL": { "type": "string" },
+        "authProvider": { "type": "string", "enum": ["google", "password", "phone", "demo"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "nom", "prenom", "role", "ville", "actif"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Article physique stocké au hub central Bamako",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "sku": { "type": "string", "maxLength": 40 },
+        "nom": { "type": "string", "maxLength": 150 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "categorieId": { "type": "number" },
+        "fournisseurId": { "type": "number" },
+        "prixAchatFournisseur": { "type": "number" },
+        "prixRevendeur": { "type": "number" },
+        "prixConseilleClient": { "type": "number" },
+        "stockPhysique": { "type": "number" },
+        "stockReserve": { "type": "number" },
+        "seuilAlerte": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "disponible": { "type": "boolean" }
+      },
+      "required": ["id", "sku", "nom", "prixRevendeur", "prixConseilleClient", "stockPhysique"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Commande d'un client ou d'un revendeur avec livraison et encaissement COD",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "reference": { "type": "string", "maxLength": 50 },
+        "dateCreation": { "type": "string" },
+        "clientId": { "type": "number" },
+        "clientFirebaseUid": { "type": "string" },
+        "clientNom": { "type": "string", "maxLength": 80 },
+        "clientPrenom": { "type": "string", "maxLength": 80 },
+        "clientTelephone": { "type": "string", "maxLength": 30 },
+        "clientTelephone2": { "type": "string", "maxLength": 30 },
+        "ville": { "type": "string", "maxLength": 60 },
+        "commune": { "type": "string", "maxLength": 60 },
+        "quartier": { "type": "string", "maxLength": 100 },
+        "repereVisuel": { "type": "string", "maxLength": 255 },
+        "revendeurId": { "type": "number" },
+        "revendeurNom": { "type": "string", "maxLength": 100 },
+        "livreurId": { "type": "number" },
+        "livreurNom": { "type": "string", "maxLength": 100 },
+        "statut": { "type": "string", "enum": ["EN_ATTENTE", "CONFIRMEE", "EN_PREPARATION", "EXPEDIEE", "LIVREE", "ANNULEE", "ECHOUEE"] },
+        "modePaiement": { "type": "string", "enum": ["ESPECES_LIVRAISON", "ORANGE_MONEY", "MOOV_MONEY", "WAVE"] },
+        "statutPaiement": { "type": "string", "enum": ["EN_ATTENTE", "PAYE", "ECHOUE", "REMBOURSE"] },
+        "fraisLivraison": { "type": "number" },
+        "montantArticles": { "type": "number" },
+        "montantTotal": { "type": "number" },
+        "totalMargeRevendeur": { "type": "number" },
+        "totalMargePlateforme": { "type": "number" }
+      },
+      "required": ["id", "reference", "clientNom", "clientTelephone", "ville", "statut", "montantTotal"]
+    },
+    "WalletTransaction": {
+      "title": "WalletTransaction",
+      "description": "Commissions et retraits Mobile Money du portefeuille revendeur",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "revendeurId": { "type": "number" },
+        "type": { "type": "string", "enum": ["CREDIT_COMMISSION", "RETRAIT_MOBILE_MONEY", "ANNULATION_COMMISSION"] },
+        "montant": { "type": "number" },
+        "date": { "type": "string" },
+        "referenceCommande": { "type": "string", "maxLength": 50 },
+        "statut": { "type": "string", "enum": ["VALIDE", "EN_ATTENTE", "REJETE"] },
+        "operateurMobileMoney": { "type": "string", "enum": ["ORANGE_MONEY", "MOOV_MONEY", "WAVE"] },
+        "numeroTelephoneMobileMoney": { "type": "string", "maxLength": 30 },
+        "motif": { "type": "string", "maxLength": 255 }
+      },
+      "required": ["id", "revendeurId", "type", "montant", "statut"]
+    },
+    "RestockRequest": {
+      "title": "RestockRequest",
+      "description": "Expédition de réapprovisionnement expédiée par un fournisseur au Hub central",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "fournisseurId": { "type": "number" },
+        "fournisseurNom": { "type": "string", "maxLength": 100 },
+        "produitId": { "type": "number" },
+        "produitNom": { "type": "string", "maxLength": 150 },
+        "quantite": { "type": "number" },
+        "prixAchatUnitaire": { "type": "number" },
+        "dateDeclaration": { "type": "string" },
+        "statut": { "type": "string", "enum": ["EN_TRANSIT", "RECEPTIONNE", "ANNULE"] }
+      },
+      "required": ["id", "fournisseurId", "produitId", "quantite", "statut"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Catégorie de produits du catalogue",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "nom": { "type": "string", "maxLength": 80 },
+        "slug": { "type": "string", "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 300 }
+      },
+      "required": ["id", "nom", "slug"]
+    },
+    "FaqItem": {
+      "title": "FaqItem",
+      "description": "Question fréquente d'aide et logistique pour Bamako",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 50 },
+        "question": { "type": "string", "maxLength": 200 },
+        "reponse": { "type": "string", "maxLength": 1000 },
+        "categorie": { "type": "string", "enum": ["LIVRAISON", "PAIEMENT", "REVENDEUR", "GENERAL"] },
+        "ordre": { "type": "number" }
+      },
+      "required": ["id", "question", "reponse", "categorie", "ordre"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Profils utilisateurs cloisonnés : chaque utilisateur ne peut modifier que son profil"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Catalogue public en lecture pour la boutique et revendeurs, modification réservée aux fournisseurs ou admin"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Commandes avec isolation des données sensibles (téléphone, repère, adresses) selon le rôle"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "WalletTransaction",
+      "description": "Transactions du portefeuille revendeur, visibles uniquement par le revendeur concerné ou l'admin"
+    },
+    "/restocks/{restockId}": {
+      "schema": "RestockRequest",
+      "description": "Déclarations de réassort visibles uniquement par le fournisseur émetteur ou l'admin"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Catégories publiques en lecture"
+    },
+    "/faqs/{faqId}": {
+      "schema": "FaqItem",
+      "description": "Foire aux questions publique en lecture"
+    }
+  }
+}
